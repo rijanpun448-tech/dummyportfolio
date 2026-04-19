@@ -1,141 +1,154 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Anime World 🌸</title>
+<title>PUBG Aim Trainer 🔫</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(120deg, #0f0f1a, #1a1a2e);
-  color: white;
-  overflow-x: hidden;
-}
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: url("https://images.unsplash.com/photo-1605902711622-cfb43c4437d1") no-repeat center/cover;
+    color: #fff;
+    text-align: center;
+    overflow: hidden;
+  }
 
-/* Floating animation */
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-  100% { transform: translateY(0px); }
-}
+  body::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    top: 0;
+    left: 0;
+    z-index: -1;
+  }
 
-/* Navbar */
-nav {
-  position: fixed;
-  width: 100%;
-  padding: 15px;
-  background: rgba(0,0,0,0.5);
-  text-align: center;
-  backdrop-filter: blur(10px);
-}
+  h1 {
+    margin-top: 20px;
+    font-size: 32px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px #000;
+  }
 
-nav a {
-  color: #ff77ff;
-  margin: 0 15px;
-  text-decoration: none;
-  font-weight: bold;
-}
+  #score {
+    font-size: 22px;
+    margin: 10px;
+  }
 
-nav a:hover {
-  color: white;
-}
+  #timer {
+    font-size: 18px;
+  }
 
-/* Hero section */
-.hero {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  text-align: center;
-}
+  #gameArea {
+    position: relative;
+    width: 100vw;
+    height: 80vh;
+  }
 
-.hero img {
-  width: 250px;
-  border-radius: 20px;
-  animation: float 4s ease-in-out infinite;
-  box-shadow: 0 0 30px #ff77ff;
-}
+  #target {
+    width: 70px;
+    height: 70px;
+    position: absolute;
+    cursor: pointer;
+    background: url("https://cdn-icons-png.flaticon.com/512/684/684908.png") no-repeat center/contain;
+    transition: transform 0.1s;
+  }
 
-.hero h1 {
-  font-size: 3rem;
-  margin-top: 20px;
-}
+  #target:active {
+    transform: scale(0.7);
+  }
 
-.hero p {
-  opacity: 0.8;
-}
+  #startBtn {
+    padding: 12px 25px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    background: #ffb300;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+  }
 
-/* Gallery */
-.gallery {
-  padding: 50px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  background: #1f1f3a;
-  border-radius: 15px;
-  overflow: hidden;
-  transition: 0.4s;
-}
-
-.card:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 20px #ff77ff;
-}
-
-.card img {
-  width: 100%;
-  height: 250px;
-  object-fit: cover;
-}
-
-/* Footer */
-footer {
-  text-align: center;
-  padding: 20px;
-  background: #0f0f1a;
-}
+  #startBtn:hover {
+    background: #ffaa00;
+  }
 </style>
-
 </head>
 
 <body>
 
-<nav>
-  <a href="#">Home</a>
-  <a href="#gallery">Gallery</a>
-</nav>
+<h1>🔫 PUBG Aim Trainer</h1>
+<div id="score">Kills: 0</div>
+<div id="timer">Time: 15</div>
+<button id="startBtn">Start Match</button>
 
-<section class="hero">
-  <!-- Replace this image with your anime image -->
-  <img src="https://i.imgur.com/3ZQ3Z4H.png" alt="Anime Girl">
-  <h1>Welcome to Anime World 🌸</h1>
-  <p>Feel the vibes of anime aesthetics ✨</p>
-</section>
+<div id="gameArea">
+  <div id="target"></div>
+</div>
 
-<section id="gallery" class="gallery">
-  <div class="card">
-    <img src="https://i.imgur.com/qIufhof.png">
-  </div>
-  <div class="card">
-    <img src="https://i.imgur.com/8Km9tLL.jpg">
-  </div>
-  <div class="card">
-    <img src="https://i.imgur.com/JlUvsxa.jpg">
-  </div>
-  <div class="card">
-    <img src="https://i.imgur.com/5tj6S7Ol.jpg">
-  </div>
-</section>
+<!-- 🔊 Gun Sound -->
+<audio id="gunSound" src="https://www.soundjay.com/mechanical/sounds/gun-shot-1.mp3"></audio>
 
-<footer>
-  <p>Made with ❤️ in Anime Style</p>
-</footer>
+<script>
+  const target = document.getElementById("target");
+  const scoreDisplay = document.getElementById("score");
+  const timerDisplay = document.getElementById("timer");
+  const startBtn = document.getElementById("startBtn");
+  const gunSound = document.getElementById("gunSound");
+
+  let score = 0;
+  let timeLeft = 15;
+  let moveInterval, timerInterval;
+
+  function moveTarget() {
+    const x = Math.random() * (window.innerWidth - 80);
+    const y = Math.random() * (window.innerHeight - 180);
+    target.style.left = x + "px";
+    target.style.top = y + "px";
+  }
+
+  target.addEventListener("click", () => {
+    score++;
+    scoreDisplay.textContent = "Kills: " + score;
+
+    // 🔊 play gun sound
+    gunSound.currentTime = 0;
+    gunSound.play();
+
+    moveTarget();
+  });
+
+  startBtn.addEventListener("click", () => {
+    score = 0;
+    timeLeft = 15;
+
+    scoreDisplay.textContent = "Kills: 0";
+    timerDisplay.textContent = "Time: 15";
+
+    moveTarget();
+
+    clearInterval(moveInterval);
+    clearInterval(timerInterval);
+
+    moveInterval = setInterval(moveTarget, 800);
+
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      timerDisplay.textContent = "Time: " + timeLeft;
+
+      if (timeLeft <= 0) {
+        clearInterval(moveInterval);
+        clearInterval(timerInterval);
+        alert("Match Over! Total Kills: " + score);
+      }
+    }, 1000);
+  });
+</script>
 
 </body>
 </html>
+```
