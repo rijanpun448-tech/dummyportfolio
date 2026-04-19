@@ -1,74 +1,108 @@
-```html id="imgver"
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Chicken Road 🐔</title>
+<title>Chicken Road AAA 🐔</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <style>
-  body {
-    margin: 0;
-    background: #222;
-    color: white;
-    text-align: center;
-    font-family: Arial;
-    overflow: hidden;
-  }
+body {
+  margin: 0;
+  background: #111;
+  font-family: Arial;
+  overflow: hidden;
+  text-align: center;
+  color: white;
+}
 
-  canvas {
-    display: block;
-    margin: auto;
-    background: #333;
-  }
+canvas {
+  display: block;
+  margin: auto;
+  background: #222;
+  border: 2px solid #444;
+}
 
-  #controls {
-    position: fixed;
-    bottom: 10px;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-  }
+/* 🎮 joystick */
+#joystick {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+}
 
-  .btn {
-    width: 60px;
-    height: 60px;
-    background: #ffcc00;
-    color: black;
-    font-size: 24px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+#stick {
+  width: 50px;
+  height: 50px;
+  background: #ffcc00;
+  border-radius: 50%;
+  position: absolute;
+  top: 35px;
+  left: 35px;
+}
+
+/* UI */
+#ui {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  text-align: left;
+}
 </style>
 </head>
 
 <body>
 
-<h2>🐔 Chicken Road</h2>
+<div id="ui">
+  <div>🐔 Score: <span id="score">0</span></div>
+  <div>❤️ Lives: <span id="lives">3</span></div>
+  <div>🏆 Best: <span id="best">0</span></div>
+</div>
+
 <canvas id="game" width="360" height="600"></canvas>
 
-<div id="controls">
-  <div class="btn" onclick="move('left')">⬅️</div>
-  <div class="btn" onclick="move('up')">⬆️</div>
-  <div class="btn" onclick="move('down')">⬇️</div>
-  <div class="btn" onclick="move('right')">➡️</div>
+<div id="joystick">
+  <div id="stick"></div>
 </div>
+
+<!-- 🔊 sounds -->
+<audio id="moveSound" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
+<audio id="crashSound" src="https://www.soundjay.com/transport/sounds/crash.mp3"></audio>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* 🐔 Chicken Image */
-const chickenImg = new Image();
-chickenImg.src = "https://i.imgur.com/4AiXzf8.png";
+const moveSound = document.getElementById("moveSound");
+const crashSound = document.getElementById("crashSound");
 
-/* 🚗 Car Image */
+let score = 0;
+let lives = 3;
+let best = localStorage.getItem("best") || 0;
+
+/* 🐔 animation frames */
+const frames = [
+  "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+  "https://cdn-icons-png.flaticon.com/512/616/616430.png",
+  "https://cdn-icons-png.flaticon.com/512/616/616494.png"
+];
+
+let imgs = frames.map(src => {
+  let i = new Image();
+  i.src = src;
+  return i;
+});
+
+let frame = 0;
+let tick = 0;
+
+/* 🚗 car */
 const carImg = new Image();
-carImg.src = "https://i.imgur.com/Z6X6K0P.png";
+carImg.src = "https://cdn-icons-png.flaticon.com/512/741/741407.png";
 
+/* 🐔 player */
 let chicken = {
   x: 160,
   y: 550,
@@ -77,115 +111,155 @@ let chicken = {
 };
 
 let cars = [];
-let score = 0;
 
-function createCar() {
-  let laneY = Math.floor(Math.random() * 10) * 60;
+/* 🌙 day/night */
+let dark = false;
+setInterval(() => dark = !dark, 8000);
+
+/* 🚗 spawn cars */
+function spawnCar(){
+  let lanes = [60,120,180,240,300,360,420,480];
+
   cars.push({
-    x: Math.random() > 0.5 ? -60 : 360,
-    y: laneY,
-    width: 60,
-    height: 35,
-    speed: (Math.random() * 3 + 2) * (Math.random() > 0.5 ? 1 : -1)
+    x: Math.random()>0.5?-60:360,
+    y: lanes[Math.floor(Math.random()*lanes.length)],
+    w: 50,
+    h: 35,
+    speed: (Math.random()*2+2)*(Math.random()>0.5?1:-1)
   });
 }
 
-function drawChicken() {
-  ctx.drawImage(chickenImg, chicken.x, chicken.y, chicken.size, chicken.size);
+/* 🐔 draw chicken */
+function drawChicken(){
+  tick++;
+  if(tick%8===0) frame = (frame+1)%imgs.length;
+  ctx.drawImage(imgs[frame], chicken.x, chicken.y, chicken.size, chicken.size);
 }
 
-function drawCars() {
-  cars.forEach(car => {
-    ctx.drawImage(carImg, car.x, car.y, car.width, car.height);
+/* 🚗 draw cars */
+function drawCars(){
+  cars.forEach(c=>{
+    ctx.drawImage(carImg,c.x,c.y,c.w,c.h);
   });
 }
 
-function moveCars() {
-  cars.forEach(car => car.x += car.speed);
-  cars = cars.filter(car => car.x > -80 && car.x < 420);
+/* 🚗 move cars */
+function moveCars(){
+  cars.forEach(c=>c.x+=c.speed);
+  cars = cars.filter(c=>c.x>-100 && c.x<420);
 }
 
-function checkCollision() {
-  for (let car of cars) {
-    if (
-      chicken.x < car.x + car.width &&
-      chicken.x + chicken.size > car.x &&
-      chicken.y < car.y + car.height &&
-      chicken.y + chicken.size > car.y
-    ) {
-      alert("💀 Game Over! Score: " + score);
-      location.reload();
+/* 💥 collision */
+function checkCollision(){
+  for(let c of cars){
+    if(
+      chicken.x < c.x+c.w &&
+      chicken.x+chicken.size > c.x &&
+      chicken.y < c.y+c.h &&
+      chicken.y+chicken.size > c.y
+    ){
+      crashSound.play();
+      lives--;
+      chicken.x=160;
+      chicken.y=550;
+
+      if(lives<=0){
+        gameOver();
+      }
     }
   }
 }
 
-function drawRoad() {
-  ctx.fillStyle = "#2f2f2f";
-  ctx.fillRect(0, 0, 360, 600);
+/* 🛣️ road */
+function drawRoad(){
+  ctx.fillStyle = dark ? "#000" : "#333";
+  ctx.fillRect(0,0,360,600);
 
-  ctx.strokeStyle = "white";
-  ctx.setLineDash([20, 20]);
+  ctx.strokeStyle = "#ffffff30";
+  ctx.setLineDash([15,15]);
 
-  for (let i = 0; i < 10; i++) {
+  for(let i=0;i<10;i++){
     ctx.beginPath();
-    ctx.moveTo(0, i * 60 + 30);
-    ctx.lineTo(360, i * 60 + 30);
+    ctx.moveTo(0,i*60);
+    ctx.lineTo(360,i*60);
     ctx.stroke();
   }
 
   ctx.setLineDash([]);
 }
 
-function move(dir) {
-  if (dir === "up") {
-    chicken.y -= chicken.speed;
-    score++;
-  }
-  if (dir === "down") chicken.y += chicken.speed;
-  if (dir === "left") chicken.x -= chicken.speed;
-  if (dir === "right") chicken.x += chicken.speed;
+/* 🎮 movement */
+function move(dir){
+  moveSound.play();
+
+  if(dir==="up"){ chicken.y-=chicken.speed; score++; }
+  if(dir==="down") chicken.y+=chicken.speed;
+  if(dir==="left") chicken.x-=chicken.speed;
+  if(dir==="right") chicken.x+=chicken.speed;
 }
 
-function update() {
-  ctx.clearRect(0, 0, 360, 600);
+/* 🏆 game over */
+function gameOver(){
+  if(score>best){
+    localStorage.setItem("best",score);
+  }
+  alert("💀 Game Over!\nScore: "+score);
+  location.reload();
+}
+
+/* 🔁 loop */
+function update(){
+  ctx.clearRect(0,0,360,600);
 
   drawRoad();
   drawChicken();
   drawCars();
+
   moveCars();
   checkCollision();
 
-  ctx.fillStyle = "white";
-  ctx.fillText("Score: " + score, 10, 20);
+  document.getElementById("score").innerText=score;
+  document.getElementById("lives").innerText=lives;
+  document.getElementById("best").innerText=best;
 
   requestAnimationFrame(update);
 }
 
-setInterval(createCar, 1000);
+setInterval(spawnCar,800);
 update();
 
-/* 📱 Swipe Control */
-let startX, startY;
+/* 🎮 joystick */
+let stick = document.getElementById("stick");
+let joy = document.getElementById("joystick");
 
-canvas.addEventListener("touchstart", e => {
-  startX = e.touches[0].clientX;
-  startY = e.touches[0].clientY;
+let dragging=false;
+
+joy.addEventListener("touchstart",()=>dragging=true);
+joy.addEventListener("touchend",()=>{
+  dragging=false;
+  stick.style.left="35px";
+  stick.style.top="35px";
 });
 
-canvas.addEventListener("touchend", e => {
-  let dx = e.changedTouches[0].clientX - startX;
-  let dy = e.changedTouches[0].clientY - startY;
+joy.addEventListener("touchmove",(e)=>{
+  if(!dragging) return;
 
-  if (Math.abs(dx) > Math.abs(dy)) {
-    if (dx > 0) move("right");
-    else move("left");
-  } else {
-    if (dy > 0) move("down");
-    else move("up");
+  let t=e.touches[0];
+  let rect=joy.getBoundingClientRect();
+
+  let x=t.clientX-rect.left-60;
+  let y=t.clientY-rect.top-60;
+
+  stick.style.left=35+x*0.3+"px";
+  stick.style.top=35+y*0.3+"px";
+
+  if(Math.abs(x)>Math.abs(y)){
+    move(x>0?"right":"left");
+  }else{
+    move(y>0?"down":"up");
   }
 });
 </script>
 
 </body>
 </html>
-```
