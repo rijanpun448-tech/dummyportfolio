@@ -1,152 +1,144 @@
-```html
+```html id="chickenroad"
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>PUBG Aim Trainer 🔫</title>
+<title>Chicken Road 🐔</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
   body {
     margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: url("https://images.unsplash.com/photo-1605902711622-cfb43c4437d1") no-repeat center/cover;
-    color: #fff;
+    background: #222;
+    color: white;
     text-align: center;
-    overflow: hidden;
-  }
-
-  body::before {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
-    top: 0;
-    left: 0;
-    z-index: -1;
+    font-family: Arial;
   }
 
   h1 {
-    margin-top: 20px;
-    font-size: 32px;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px #000;
-  }
-
-  #score {
-    font-size: 22px;
     margin: 10px;
   }
 
-  #timer {
-    font-size: 18px;
-  }
-
-  #gameArea {
-    position: relative;
-    width: 100vw;
-    height: 80vh;
-  }
-
-  #target {
-    width: 70px;
-    height: 70px;
-    position: absolute;
-    cursor: pointer;
-    background: url("https://cdn-icons-png.flaticon.com/512/684/684908.png") no-repeat center/contain;
-    transition: transform 0.1s;
-  }
-
-  #target:active {
-    transform: scale(0.7);
-  }
-
-  #startBtn {
-    padding: 12px 25px;
-    font-size: 18px;
-    border: none;
-    border-radius: 8px;
-    background: #ffb300;
-    color: black;
-    font-weight: bold;
-    cursor: pointer;
-  }
-
-  #startBtn:hover {
-    background: #ffaa00;
+  canvas {
+    background: #444;
+    display: block;
+    margin: auto;
+    border: 3px solid white;
   }
 </style>
 </head>
 
 <body>
 
-<h1>🔫 PUBG Aim Trainer</h1>
-<div id="score">Kills: 0</div>
-<div id="timer">Time: 15</div>
-<button id="startBtn">Start Match</button>
-
-<div id="gameArea">
-  <div id="target"></div>
-</div>
-
-<!-- 🔊 Gun Sound -->
-<audio id="gunSound" src="https://www.soundjay.com/mechanical/sounds/gun-shot-1.mp3"></audio>
+<h1>🐔 Chicken Road Crossing</h1>
+<p>Use Arrow Keys ↑ ↓ ← →</p>
+<canvas id="game" width="400" height="600"></canvas>
 
 <script>
-  const target = document.getElementById("target");
-  const scoreDisplay = document.getElementById("score");
-  const timerDisplay = document.getElementById("timer");
-  const startBtn = document.getElementById("startBtn");
-  const gunSound = document.getElementById("gunSound");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-  let score = 0;
-  let timeLeft = 15;
-  let moveInterval, timerInterval;
+let chicken = {
+  x: 180,
+  y: 550,
+  size: 30,
+  speed: 20
+};
 
-  function moveTarget() {
-    const x = Math.random() * (window.innerWidth - 80);
-    const y = Math.random() * (window.innerHeight - 180);
-    target.style.left = x + "px";
-    target.style.top = y + "px";
+let cars = [];
+let score = 0;
+
+function createCar() {
+  let laneY = Math.floor(Math.random() * 10) * 60;
+  cars.push({
+    x: Math.random() > 0.5 ? -50 : 400,
+    y: laneY,
+    width: 50,
+    height: 30,
+    speed: (Math.random() * 3 + 2) * (Math.random() > 0.5 ? 1 : -1)
+  });
+}
+
+function drawChicken() {
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(chicken.x, chicken.y, chicken.size, chicken.size);
+}
+
+function drawCars() {
+  ctx.fillStyle = "red";
+  cars.forEach(car => {
+    ctx.fillRect(car.x, car.y, car.width, car.height);
+  });
+}
+
+function moveCars() {
+  cars.forEach(car => {
+    car.x += car.speed;
+  });
+
+  cars = cars.filter(car => car.x > -60 && car.x < 460);
+}
+
+function checkCollision() {
+  for (let car of cars) {
+    if (
+      chicken.x < car.x + car.width &&
+      chicken.x + chicken.size > car.x &&
+      chicken.y < car.y + car.height &&
+      chicken.y + chicken.size > car.y
+    ) {
+      alert("💀 Game Over! Score: " + score);
+      document.location.reload();
+    }
+  }
+}
+
+function drawRoad() {
+  ctx.fillStyle = "#333";
+  ctx.fillRect(0, 0, 400, 600);
+
+  ctx.strokeStyle = "white";
+  ctx.setLineDash([20, 20]);
+
+  for (let i = 0; i < 10; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, i * 60 + 30);
+    ctx.lineTo(400, i * 60 + 30);
+    ctx.stroke();
   }
 
-  target.addEventListener("click", () => {
+  ctx.setLineDash([]);
+}
+
+function update() {
+  ctx.clearRect(0, 0, 400, 600);
+
+  drawRoad();
+  drawChicken();
+  drawCars();
+
+  moveCars();
+  checkCollision();
+
+  ctx.fillStyle = "white";
+  ctx.fillText("Score: " + score, 10, 20);
+
+  requestAnimationFrame(update);
+}
+
+setInterval(createCar, 1200);
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp") {
+    chicken.y -= chicken.speed;
     score++;
-    scoreDisplay.textContent = "Kills: " + score;
+  }
+  if (e.key === "ArrowDown") chicken.y += chicken.speed;
+  if (e.key === "ArrowLeft") chicken.x -= chicken.speed;
+  if (e.key === "ArrowRight") chicken.x += chicken.speed;
+});
 
-    // 🔊 play gun sound
-    gunSound.currentTime = 0;
-    gunSound.play();
-
-    moveTarget();
-  });
-
-  startBtn.addEventListener("click", () => {
-    score = 0;
-    timeLeft = 15;
-
-    scoreDisplay.textContent = "Kills: 0";
-    timerDisplay.textContent = "Time: 15";
-
-    moveTarget();
-
-    clearInterval(moveInterval);
-    clearInterval(timerInterval);
-
-    moveInterval = setInterval(moveTarget, 800);
-
-    timerInterval = setInterval(() => {
-      timeLeft--;
-      timerDisplay.textContent = "Time: " + timeLeft;
-
-      if (timeLeft <= 0) {
-        clearInterval(moveInterval);
-        clearInterval(timerInterval);
-        alert("Match Over! Total Kills: " + score);
-      }
-    }, 1000);
-  });
+update();
 </script>
 
 </body>
