@@ -2,45 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Chicken Road AAA 🐔</title>
+<title>Chicken Road ULTRA AAA 🐔🔥</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <style>
 body {
   margin: 0;
-  background: #111;
-  font-family: Arial;
   overflow: hidden;
-  text-align: center;
+  background: #000;
+  font-family: Arial;
   color: white;
+  text-align: center;
 }
 
 canvas {
   display: block;
   margin: auto;
-  background: #222;
-  border: 2px solid #444;
-}
-
-/* 🎮 joystick */
-#joystick {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  width: 120px;
-  height: 120px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 50%;
-}
-
-#stick {
-  width: 50px;
-  height: 50px;
-  background: #ffcc00;
-  border-radius: 50%;
-  position: absolute;
-  top: 35px;
-  left: 35px;
+  background: #1a1a1a;
 }
 
 /* UI */
@@ -48,7 +26,9 @@ canvas {
   position: fixed;
   top: 10px;
   left: 10px;
+  font-size: 14px;
   text-align: left;
+  z-index: 10;
 }
 </style>
 </head>
@@ -56,126 +36,159 @@ canvas {
 <body>
 
 <div id="ui">
-  <div>🐔 Score: <span id="score">0</span></div>
-  <div>❤️ Lives: <span id="lives">3</span></div>
-  <div>🏆 Best: <span id="best">0</span></div>
+🐔 Score: <span id="score">0</span><br>
+🏆 Best: <span id="best">0</span><br>
+❤️ Lives: <span id="lives">3</span><br>
+⚡ Speed: <span id="speed">1x</span>
 </div>
 
 <canvas id="game" width="360" height="600"></canvas>
 
-<div id="joystick">
-  <div id="stick"></div>
-</div>
-
-<!-- 🔊 sounds -->
+<audio id="hitSound" src="https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3"></audio>
 <audio id="moveSound" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
-<audio id="crashSound" src="https://www.soundjay.com/transport/sounds/crash.mp3"></audio>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+const hitSound = document.getElementById("hitSound");
 const moveSound = document.getElementById("moveSound");
-const crashSound = document.getElementById("crashSound");
 
 let score = 0;
 let lives = 3;
 let best = localStorage.getItem("best") || 0;
+let speedMultiplier = 1;
 
-/* 🐔 animation frames */
+/* 🐔 animated frames */
 const frames = [
   "https://cdn-icons-png.flaticon.com/512/616/616408.png",
   "https://cdn-icons-png.flaticon.com/512/616/616430.png",
   "https://cdn-icons-png.flaticon.com/512/616/616494.png"
 ];
 
-let imgs = frames.map(src => {
-  let i = new Image();
-  i.src = src;
-  return i;
-});
+let imgs = frames.map(src => { let i=new Image(); i.src=src; return i; });
 
-let frame = 0;
-let tick = 0;
+let chicken = { x:160, y:550, size:40, dir:"up" };
+let frame=0, tick=0;
 
-/* 🚗 car */
+/* 🚗 AI cars */
 const carImg = new Image();
 carImg.src = "https://cdn-icons-png.flaticon.com/512/741/741407.png";
 
-/* 🐔 player */
-let chicken = {
-  x: 160,
-  y: 550,
-  size: 40,
-  speed: 25
-};
-
 let cars = [];
 
-/* 🌙 day/night */
-let dark = false;
-setInterval(() => dark = !dark, 8000);
+/* 🌗 smooth day-night */
+let light = 0;
+let night = false;
 
-/* 🚗 spawn cars */
+/* particles */
+let particles = [];
+
+/* spawn cars smarter */
 function spawnCar(){
-  let lanes = [60,120,180,240,300,360,420,480];
+  let lanes=[60,120,180,240,300,360,420,480];
 
-  cars.push({
-    x: Math.random()>0.5?-60:360,
-    y: lanes[Math.floor(Math.random()*lanes.length)],
-    w: 50,
-    h: 35,
-    speed: (Math.random()*2+2)*(Math.random()>0.5?1:-1)
-  });
+  let density = Math.min(6, 1 + score/10);
+
+  for(let i=0;i<density;i++){
+    cars.push({
+      x: Math.random()>0.5?-60:360,
+      y: lanes[Math.floor(Math.random()*lanes.length)],
+      w:50,
+      h:35,
+      sp:(Math.random()*2+2+score*0.02)*(Math.random()>0.5?1:-1)
+    });
+  }
 }
 
-/* 🐔 draw chicken */
+/* 🐔 draw */
 function drawChicken(){
   tick++;
-  if(tick%8===0) frame = (frame+1)%imgs.length;
+  if(tick%6===0) frame=(frame+1)%imgs.length;
+
   ctx.drawImage(imgs[frame], chicken.x, chicken.y, chicken.size, chicken.size);
 }
 
-/* 🚗 draw cars */
+/* 🚗 cars */
 function drawCars(){
   cars.forEach(c=>{
     ctx.drawImage(carImg,c.x,c.y,c.w,c.h);
   });
 }
 
-/* 🚗 move cars */
-function moveCars(){
-  cars.forEach(c=>c.x+=c.speed);
-  cars = cars.filter(c=>c.x>-100 && c.x<420);
+/* particles */
+function drawParticles(){
+  particles.forEach(p=>{
+    ctx.fillStyle="orange";
+    ctx.fillRect(p.x,p.y,3,3);
+  });
 }
 
-/* 💥 collision */
-function checkCollision(){
+/* move */
+function updateCars(){
+  cars.forEach(c=>c.x+=c.sp);
+  cars=cars.filter(c=>c.x>-120 && c.x<420);
+}
+
+/* 💥 particles on crash */
+function explode(x,y){
+  for(let i=0;i<20;i++){
+    particles.push({
+      x:x,
+      y:y,
+      vx:(Math.random()-0.5)*4,
+      vy:(Math.random()-0.5)*4,
+      life:30
+    });
+  }
+}
+
+/* collision */
+let invincible=0;
+
+function check(){
+  if(invincible>0) invincible--;
+
   for(let c of cars){
     if(
-      chicken.x < c.x+c.w &&
-      chicken.x+chicken.size > c.x &&
-      chicken.y < c.y+c.h &&
-      chicken.y+chicken.size > c.y
+      chicken.x<c.x+c.w &&
+      chicken.x+chicken.size>c.x &&
+      chicken.y<c.y+c.h &&
+      chicken.y+chicken.size>c.y
     ){
-      crashSound.play();
+      if(invincible>0) return;
+
+      hitSound.play();
       lives--;
+      explode(chicken.x,chicken.y);
+      invincible=60;
+
       chicken.x=160;
       chicken.y=550;
 
       if(lives<=0){
-        gameOver();
+        if(score>best) localStorage.setItem("best",score);
+        alert("💀 GAME OVER\nScore: "+score);
+        location.reload();
       }
     }
   }
 }
 
-/* 🛣️ road */
-function drawRoad(){
-  ctx.fillStyle = dark ? "#000" : "#333";
+/* road + lighting */
+function road(){
+  light += night ? -0.01 : 0.01;
+  light=Math.max(0,Math.min(1,light));
+
+  if(light===1) night=true;
+  if(light===0) night=false;
+
+  let bg = Math.floor(40+light*100);
+
+  ctx.fillStyle=`rgb(${bg},${bg},${bg})`;
   ctx.fillRect(0,0,360,600);
 
-  ctx.strokeStyle = "#ffffff30";
+  ctx.strokeStyle="#ffffff30";
   ctx.setLineDash([15,15]);
 
   for(let i=0;i<10;i++){
@@ -188,76 +201,79 @@ function drawRoad(){
   ctx.setLineDash([]);
 }
 
-/* 🎮 movement */
+/* movement */
 function move(dir){
+  moveSound.currentTime=0;
   moveSound.play();
 
-  if(dir==="up"){ chicken.y-=chicken.speed; score++; }
-  if(dir==="down") chicken.y+=chicken.speed;
-  if(dir==="left") chicken.x-=chicken.speed;
-  if(dir==="right") chicken.x+=chicken.speed;
+  if(dir==="up"){ chicken.y-=30; score++; }
+  if(dir==="down") chicken.y+=30;
+  if(dir==="left") chicken.x-=30;
+  if(dir==="right") chicken.x+=30;
+
+  speedMultiplier = 1 + score*0.01;
 }
 
-/* 🏆 game over */
-function gameOver(){
-  if(score>best){
-    localStorage.setItem("best",score);
-  }
-  alert("💀 Game Over!\nScore: "+score);
-  location.reload();
+/* update particles */
+function updateParticles(){
+  particles.forEach(p=>{
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.life--;
+  });
+
+  particles=particles.filter(p=>p.life>0);
 }
 
-/* 🔁 loop */
-function update(){
+/* loop */
+function loop(){
   ctx.clearRect(0,0,360,600);
 
-  drawRoad();
-  drawChicken();
+  road();
   drawCars();
+  drawChicken();
+  drawParticles();
 
-  moveCars();
-  checkCollision();
+  updateCars();
+  updateParticles();
+  check();
 
   document.getElementById("score").innerText=score;
   document.getElementById("lives").innerText=lives;
   document.getElementById("best").innerText=best;
+  document.getElementById("speed").innerText=speedMultiplier.toFixed(1)+"x";
 
-  requestAnimationFrame(update);
+  requestAnimationFrame(loop);
 }
 
-setInterval(spawnCar,800);
-update();
+/* spawn difficulty scaling */
+setInterval(spawnCar, Math.max(300, 1000 - score*5));
+loop();
 
-/* 🎮 joystick */
-let stick = document.getElementById("stick");
-let joy = document.getElementById("joystick");
+/* swipe + keyboard */
+let sx,sy;
 
-let dragging=false;
-
-joy.addEventListener("touchstart",()=>dragging=true);
-joy.addEventListener("touchend",()=>{
-  dragging=false;
-  stick.style.left="35px";
-  stick.style.top="35px";
+canvas.addEventListener("touchstart",e=>{
+  sx=e.touches[0].clientX;
+  sy=e.touches[0].clientY;
 });
 
-joy.addEventListener("touchmove",(e)=>{
-  if(!dragging) return;
+canvas.addEventListener("touchend",e=>{
+  let dx=e.changedTouches[0].clientX-sx;
+  let dy=e.changedTouches[0].clientY-sy;
 
-  let t=e.touches[0];
-  let rect=joy.getBoundingClientRect();
-
-  let x=t.clientX-rect.left-60;
-  let y=t.clientY-rect.top-60;
-
-  stick.style.left=35+x*0.3+"px";
-  stick.style.top=35+y*0.3+"px";
-
-  if(Math.abs(x)>Math.abs(y)){
-    move(x>0?"right":"left");
+  if(Math.abs(dx)>Math.abs(dy)){
+    move(dx>0?"right":"left");
   }else{
-    move(y>0?"down":"up");
+    move(dy>0?"down":"up");
   }
+});
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp")move("up");
+  if(e.key==="ArrowDown")move("down");
+  if(e.key==="ArrowLeft")move("left");
+  if(e.key==="ArrowRight")move("right");
 });
 </script>
 
