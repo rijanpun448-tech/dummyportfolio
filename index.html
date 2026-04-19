@@ -1,10 +1,10 @@
-```html id="chickenroad"
+```html id="imgver"
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Chicken Road 🐔</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <style>
   body {
@@ -13,36 +13,67 @@
     color: white;
     text-align: center;
     font-family: Arial;
-  }
-
-  h1 {
-    margin: 10px;
+    overflow: hidden;
   }
 
   canvas {
-    background: #444;
     display: block;
     margin: auto;
-    border: 3px solid white;
+    background: #333;
+  }
+
+  #controls {
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .btn {
+    width: 60px;
+    height: 60px;
+    background: #ffcc00;
+    color: black;
+    font-size: 24px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 </style>
 </head>
 
 <body>
 
-<h1>🐔 Chicken Road Crossing</h1>
-<p>Use Arrow Keys ↑ ↓ ← →</p>
-<canvas id="game" width="400" height="600"></canvas>
+<h2>🐔 Chicken Road</h2>
+<canvas id="game" width="360" height="600"></canvas>
+
+<div id="controls">
+  <div class="btn" onclick="move('left')">⬅️</div>
+  <div class="btn" onclick="move('up')">⬆️</div>
+  <div class="btn" onclick="move('down')">⬇️</div>
+  <div class="btn" onclick="move('right')">➡️</div>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+/* 🐔 Chicken Image */
+const chickenImg = new Image();
+chickenImg.src = "https://i.imgur.com/4AiXzf8.png";
+
+/* 🚗 Car Image */
+const carImg = new Image();
+carImg.src = "https://i.imgur.com/Z6X6K0P.png";
+
 let chicken = {
-  x: 180,
+  x: 160,
   y: 550,
-  size: 30,
-  speed: 20
+  size: 40,
+  speed: 25
 };
 
 let cars = [];
@@ -51,32 +82,27 @@ let score = 0;
 function createCar() {
   let laneY = Math.floor(Math.random() * 10) * 60;
   cars.push({
-    x: Math.random() > 0.5 ? -50 : 400,
+    x: Math.random() > 0.5 ? -60 : 360,
     y: laneY,
-    width: 50,
-    height: 30,
+    width: 60,
+    height: 35,
     speed: (Math.random() * 3 + 2) * (Math.random() > 0.5 ? 1 : -1)
   });
 }
 
 function drawChicken() {
-  ctx.fillStyle = "yellow";
-  ctx.fillRect(chicken.x, chicken.y, chicken.size, chicken.size);
+  ctx.drawImage(chickenImg, chicken.x, chicken.y, chicken.size, chicken.size);
 }
 
 function drawCars() {
-  ctx.fillStyle = "red";
   cars.forEach(car => {
-    ctx.fillRect(car.x, car.y, car.width, car.height);
+    ctx.drawImage(carImg, car.x, car.y, car.width, car.height);
   });
 }
 
 function moveCars() {
-  cars.forEach(car => {
-    car.x += car.speed;
-  });
-
-  cars = cars.filter(car => car.x > -60 && car.x < 460);
+  cars.forEach(car => car.x += car.speed);
+  cars = cars.filter(car => car.x > -80 && car.x < 420);
 }
 
 function checkCollision() {
@@ -88,14 +114,14 @@ function checkCollision() {
       chicken.y + chicken.size > car.y
     ) {
       alert("💀 Game Over! Score: " + score);
-      document.location.reload();
+      location.reload();
     }
   }
 }
 
 function drawRoad() {
-  ctx.fillStyle = "#333";
-  ctx.fillRect(0, 0, 400, 600);
+  ctx.fillStyle = "#2f2f2f";
+  ctx.fillRect(0, 0, 360, 600);
 
   ctx.strokeStyle = "white";
   ctx.setLineDash([20, 20]);
@@ -103,20 +129,29 @@ function drawRoad() {
   for (let i = 0; i < 10; i++) {
     ctx.beginPath();
     ctx.moveTo(0, i * 60 + 30);
-    ctx.lineTo(400, i * 60 + 30);
+    ctx.lineTo(360, i * 60 + 30);
     ctx.stroke();
   }
 
   ctx.setLineDash([]);
 }
 
+function move(dir) {
+  if (dir === "up") {
+    chicken.y -= chicken.speed;
+    score++;
+  }
+  if (dir === "down") chicken.y += chicken.speed;
+  if (dir === "left") chicken.x -= chicken.speed;
+  if (dir === "right") chicken.x += chicken.speed;
+}
+
 function update() {
-  ctx.clearRect(0, 0, 400, 600);
+  ctx.clearRect(0, 0, 360, 600);
 
   drawRoad();
   drawChicken();
   drawCars();
-
   moveCars();
   checkCollision();
 
@@ -126,19 +161,29 @@ function update() {
   requestAnimationFrame(update);
 }
 
-setInterval(createCar, 1200);
+setInterval(createCar, 1000);
+update();
 
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowUp") {
-    chicken.y -= chicken.speed;
-    score++;
-  }
-  if (e.key === "ArrowDown") chicken.y += chicken.speed;
-  if (e.key === "ArrowLeft") chicken.x -= chicken.speed;
-  if (e.key === "ArrowRight") chicken.x += chicken.speed;
+/* 📱 Swipe Control */
+let startX, startY;
+
+canvas.addEventListener("touchstart", e => {
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
 });
 
-update();
+canvas.addEventListener("touchend", e => {
+  let dx = e.changedTouches[0].clientX - startX;
+  let dy = e.changedTouches[0].clientY - startY;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 0) move("right");
+    else move("left");
+  } else {
+    if (dy > 0) move("down");
+    else move("up");
+  }
+});
 </script>
 
 </body>
