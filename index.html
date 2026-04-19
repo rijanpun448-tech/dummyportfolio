@@ -1,129 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Portfolio</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; line-height: 1.6; }
-    header {
-      background: #111;
-      color: #fff;
-      padding: 20px 0;
-      position: fixed;
-      width: 100%;
-      top: 0;
-      z-index: 1000;
-    }
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-    }
-    nav a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    nav a:hover { color: #00adb5; }
+<meta charset="UTF-8">
+<title>Anime World 🌸</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    section {
-      padding: 80px 20px;
-      min-height: 100vh;
-      text-align: center;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(120deg, #0f0f1a, #1a1a2e);
+  color: white;
+  overflow-x: hidden;
+}
 
-    #home { background: #222; color: #fff; }
-    #about { background: #f4f4f4; }
-    #projects { background: #ddd; }
-    #contact { background: #222; color: #fff; }
+/* Floating animation */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
 
-    h1, h2 { margin-bottom: 20px; }
+/* Navbar */
+nav {
+  position: fixed;
+  width: 100%;
+  padding: 15px;
+  background: rgba(0,0,0,0.5);
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
 
-    .projects-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
+nav a {
+  color: #ff77ff;
+  margin: 0 15px;
+  text-decoration: none;
+  font-weight: bold;
+}
 
-    .project-card {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
+nav a:hover {
+  color: white;
+}
 
-    .btn {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 10px 20px;
-      background: #00adb5;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 5px;
-    }
+/* Hero section */
+.hero {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
 
-    footer {
-      text-align: center;
-      padding: 10px;
-      background: #111;
-      color: #fff;
-    }
-  </style>
+.hero img {
+  width: 250px;
+  border-radius: 20px;
+  animation: float 4s ease-in-out infinite;
+  box-shadow: 0 0 30px #ff77ff;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-top: 20px;
+}
+
+.hero p {
+  opacity: 0.8;
+}
+
+/* Gallery */
+.gallery {
+  padding: 50px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: #1f1f3a;
+  border-radius: 15px;
+  overflow: hidden;
+  transition: 0.4s;
+}
+
+.card:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px #ff77ff;
+}
+
+.card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #0f0f1a;
+}
+</style>
+
 </head>
+
 <body>
 
-<header>
-  <nav>
-    <a href="#home">Home</a>
-    <a href="#about">About</a>
-    <a href="#projects">Projects</a>
-    <a href="#contact">Contact</a>
-  </nav>
-</header>
+<nav>
+  <a href="#">Home</a>
+  <a href="#gallery">Gallery</a>
+</nav>
 
-<section id="home">
-  <h1>Hello, I'm Your Name</h1>
-  <p>Web Developer | Designer | Student</p>
-  <a href="#contact" class="btn">Contact Me</a>
+<section class="hero">
+  <!-- Replace this image with your anime image -->
+  <img src="https://i.imgur.com/3ZQ3Z4H.png" alt="Anime Girl">
+  <h1>Welcome to Anime World 🌸</h1>
+  <p>Feel the vibes of anime aesthetics ✨</p>
 </section>
 
-<section id="about">
-  <h2>About Me</h2>
-  <p>I am a passionate developer who loves building websites and applications. I enjoy learning new technologies and improving my skills.</p>
-</section>
-
-<section id="projects">
-  <h2>My Projects</h2>
-  <div class="projects-container">
-    <div class="project-card">
-      <h3>Project 1</h3>
-      <p>Short description of your project.</p>
-      <a href="#" class="btn">View</a>
-    </div>
-    <div class="project-card">
-      <h3>Project 2</h3>
-      <p>Short description of your project.</p>
-      <a href="#" class="btn">View</a>
-    </div>
-    <div class="project-card">
-      <h3>Project 3</h3>
-      <p>Short description of your project.</p>
-      <a href="#" class="btn">View</a>
-    </div>
+<section id="gallery" class="gallery">
+  <div class="card">
+    <img src="https://i.imgur.com/qIufhof.png">
+  </div>
+  <div class="card">
+    <img src="https://i.imgur.com/8Km9tLL.jpg">
+  </div>
+  <div class="card">
+    <img src="https://i.imgur.com/JlUvsxa.jpg">
+  </div>
+  <div class="card">
+    <img src="https://i.imgur.com/5tj6S7Ol.jpg">
   </div>
 </section>
 
-<section id="contact">
-  <h2>Contact Me</h2>
-  <p>Email: your@email.com</p>
-  <p>Phone: +977-XXXXXXXXXX</p>
-</section>
-
 <footer>
-  <p>© 2026 Your Name. All rights reserved.</p>
+  <p>Made with ❤️ in Anime Style</p>
 </footer>
 
 </body>
